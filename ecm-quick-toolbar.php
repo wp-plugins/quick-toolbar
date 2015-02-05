@@ -3,7 +3,7 @@
  * Plugin Name: Quick Toolbar
  * Plugin URI: http://www.ecommnet.uk
  * Description: Add frequently used menu links and custom links to the Admin Toolbar.
- * Version: 0.1
+ * Version: 0.2
  * Author: Ecommnet
  * Author URI: http://www.ecommnet.uk
  * License: GPL2
@@ -18,7 +18,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 		 * Plugin version number
 		 * @var string
 		 */
-		public $version = '0.1';
+		public $version = '0.2';
 
 		/**
 		 * Single instance of the class
@@ -65,10 +65,10 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 		}
 
 		public function enqueue_styles() {
-			wp_register_style( 'ecm_wp_admin_css', plugin_dir_url( __FILE__ ) . '/css/admin-styles.css', false, $version );
-			wp_enqueue_style( 'ecm_wp_admin_css' );
-			wp_enqueue_script( 'ecmqt_scripts', plugin_dir_url( __FILE__ ) . '/js/ecmqt-scripts.js', array(), $version, true );
-
+			wp_enqueue_style( 'dashicons' );
+			wp_register_style( 'ecmqt_wp_admin_css', plugin_dir_url( __FILE__ ) . '/css/ecmqt-admin-styles.css', false, $this->version );
+			wp_enqueue_style( 'ecmqt_wp_admin_css' );
+			wp_enqueue_script( 'ecmqt_scripts', plugin_dir_url( __FILE__ ) . '/js/ecmqt-scripts.js', array(), $this->version, true );
 		}
 
 		public function register_settings() {
@@ -77,7 +77,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 		}
 
 		public function add_admin_menu() {
-			add_menu_page( 'Quick Toolbar Links', 'Quick Toolbar', 'manage_options', 'ecm-quick-toolbar', array($this, 'admin_page'), 'dashicons-admin-links' );
+			add_menu_page( 'Quick Toolbar Links', 'Quick Toolbar', 'manage_options', 'ecm-quick-toolbar', array($this, 'admin_page'), 'dashicons-admin-links', 100 );
 			add_submenu_page( 'ecm-quick-toolbar', 'Custom Quick Links', 'Edit Custom Links', 'manage_options', 'ecm-custom-quick-toolbar', array($this, 'admin_custom_page') );
 		}
 
@@ -92,21 +92,31 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 				foreach($options as $option) {
 					$decoded = unserialize(base64_decode($option));
 					if (isset($decoded[2]) && !empty($decoded[2])) {
+						if (0 === strpos($decoded[2][3], 'http')) {
+							$title = '<img src="'. $decoded[2][3] . '"/>' . $decoded[2][1];
+						} else {
+							$title = '<span class="wp-menu-image dashicons-before ' . $decoded[2][3] . '"></span>' . $decoded[2][1];
+						}
 						$allowed = user_can( $user_ID, $decoded[3] );
 						if ($allowed == true) {
 							$admin_bar->add_menu( array(
 								'id'    => 'ecmqt_'.date("Y-m-d-his").$decoded[2][0],
-								'title' => $decoded[2][1],
+								'title' => __($title),
 								'href'  => $decoded[2][2],
 								'meta' 	=> array('class' => 'ecmqt-menu-item ecmqt-has-submenu')
 							));
 						}
 					} else {
+						if (0 === strpos($decoded[4], 'http')) {
+							$title = '<img src="'. $decoded[4] . '"/>' . $decoded[0];
+						} else {
+							$title = '<span class="wp-menu-image dashicons-before ' . $decoded[4] . '"></span>' . $decoded[0];
+						}
 						$allowed = user_can( $user_ID, $decoded[3] );
 						if ($allowed == true) {
 							$admin_bar->add_menu( array(
 								'id'    => 'ecmqt_'.date("Y-m-d-his").$j,
-								'title' => $decoded[0],
+								'title' => __($title),
 								'href'  => $decoded[1],
 								'meta' 	=> array('class' => 'ecmqt-menu-item')
 							));
@@ -140,7 +150,13 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 				// Custom Top Level Links
 				$co = 3000;
 				foreach ($custom_options as $key => $custom_option) {
-					if (isset($custom_options[$key][4]) && !empty($custom_options[$key][4])) {
+					if (empty($custom_options[$key][4]) || !isset($custom_options[$key][4])) {
+						$title = $custom_options[$key][0];
+					} else {
+						$title = '<img src="'. $custom_options[$key][4] . '" />' . $custom_options[$key][0];
+					}
+
+					if (isset($custom_options[$key][5]) && !empty($custom_options[$key][5])) {
 						if (isset($custom_options[$key][2]) && !empty($custom_options[$key][2]) && $custom_options[$key][2] == true) {
 							$meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu', 'target' => '_blank');
 						} else {
@@ -149,7 +165,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 
 						$admin_bar->add_menu( array(
 							'id'    => 'ecmqt_'.date("Y-m-d-his").$key,
-							'title' => $custom_options[$key][0],
+							'title' => $title,
 							'href'  => $custom_options[$key][1],
 							'meta' 	=> $meta
 						));
@@ -161,7 +177,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 						}
 						$admin_bar->add_menu( array(
 							'id'    => 'ecmqt_'.date("Y-m-d-his").$co,
-							'title' => $custom_options[$key][0],
+							'title' => $title,
 							'href'  => $custom_options[$key][1],
 							'meta' 	=> $meta
 						));
@@ -171,8 +187,8 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 				// Custom Submenus
 				$cos = 4000;
 				foreach($custom_options as $custom_option) {
-					if (isset($custom_option[4]) && !empty($custom_option[4])) {
-						foreach ($custom_option[4] as $custom_menu_item) {
+					if (isset($custom_option[5]) && !empty($custom_option[5])) {
+						foreach ($custom_option[5] as $custom_menu_item) {
 							if (isset($custom_menu_item[2]) && !empty($custom_menu_item[2]) && $custom_menu_item[2] == true) {
 								$meta = array('class' => 'ecmqt-submenu-item', 'target' => '_blank');
 							} else {
@@ -199,7 +215,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 			$items = $this->get_items();
 			if (isset($items) && !empty($items)) { ?>
 				<div class="wrap">
-				<h2>Quick Toolbar Links <a href="<?php echo get_admin_url() . 'admin.php?page=ecm-custom-quick-toolbar';?>" class="add-new-h2">Edit Custom Toolbar Links</a></h2>
+				<h2>Quick Toolbar Links <a href="<?php echo get_admin_url() . 'admin.php?page=ecm-custom-quick-toolbar';?>" class="add-new-h2 ecmqt-h2"">Edit Custom Toolbar Links</a></h2>
 				<br/>
 				<form method="post" action="options.php" id="_ecmqt_quicklinks_options">
 					<?php settings_fields( 'ecmqt-settings-group' ); ?>
@@ -233,7 +249,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 							if (isset($ecm_menu_item['subpages']) && !empty($ecm_menu_item['subpages'])) {
 								echo '';
 							} else {
-								echo '<input id="check_menu_'. $x .'" type="checkbox"' . ' name="_ecmqt_items[]" value="' . base64_encode(serialize(array( $ecm_menu_item['name'] ,  $ecm_menu_item['link'], '', $ecm_menu_item['permissions']))) . '"' . $checked . '/>';
+								echo '<input id="check_menu_'. $x .'" type="checkbox"' . ' name="_ecmqt_items[]" value="' . base64_encode(serialize(array( $ecm_menu_item['name'] ,  $ecm_menu_item['link'], '', $ecm_menu_item['permissions'], $ecm_menu_item['dashicon']))) . '"' . $checked . '/>';
 							}
 							echo '</td>' . "\n";
 							echo '</tr>';
@@ -271,7 +287,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 
 									echo '<tr' . $ecm_class . '>' . "\n";
 									echo '<td> &mdash; ' . $ecm_submenu_item['name'] . '</td>' . "\n";
-									echo '<td><input id="check_menu_'.$x .'" type="checkbox" name="_ecmqt_items[]" value="' . base64_encode(serialize(array( $ecm_submenu_item['name'],  $ecm_submenu_item['link'], array($ecm_submenu_item['parent']['id'], $ecm_submenu_item['parent']['name'], $ecm_submenu_item['parent']['link']), $ecm_submenu_item['permissions']))) . '"' . $sub_checked . '/></td>' . "\n";
+									echo '<td><input id="check_menu_'.$x .'" type="checkbox" name="_ecmqt_items[]" value="' . base64_encode(serialize(array( $ecm_submenu_item['name'],  $ecm_submenu_item['link'], array($ecm_submenu_item['parent']['id'], $ecm_submenu_item['parent']['name'], $ecm_submenu_item['parent']['link'], $ecm_submenu_item['parent']['dashicon']), $ecm_submenu_item['permissions']))) . '"' . $sub_checked . '/></td>' . "\n";
 									echo '</tr>' . "\n";
 									$x++;
 								}
@@ -305,11 +321,11 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 				if ($custom_option_id == $custom_link) {
 					unset($custom_options[$key]);
 				}
-				if (isset($custom_options[$key][4]) && !empty($custom_options[$key][4])) {
-					foreach ($custom_options[$key][4] as $sub_key => $sub_option) {
-						$sub_option_id = $custom_options[$key][4][$sub_key][3];
+				if (isset($custom_options[$key][5]) && !empty($custom_options[$key][5])) {
+					foreach ($custom_options[$key][5] as $sub_key => $sub_option) {
+						$sub_option_id = $custom_options[$key][5][$sub_key][3];
 						if ($sub_option_id == $custom_link) {
-							unset($custom_options[$key][4][$sub_key]);
+							unset($custom_options[$key][5][$sub_key]);
 						}
 					}
 				}
@@ -326,6 +342,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 					$link = $_POST["_ecmqt_custom_items_link"];
 					$target = $_POST["_ecmqt_custom_items_target"];
 					$parent = $_POST["_ecmqt_custom_items_parent"];
+					$icon = $_POST["_ecmqt_upload_image"];
 
 					if ($target == true) {
 						$new_window = true;
@@ -336,12 +353,12 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 					$custom_options = get_option('_ecmqt_custom_items');
 					$unique = date('dmyHis');
 					if ($parent == 'no-parent' || $parent == '') {
-						$custom_options[] = array($title, $link, $new_window, $unique);
+						$custom_options[] = array($title, $link, $new_window, $unique, $icon);
 					} else {
 						foreach ($custom_options as $key => $value) {
 							$option_key = '_ecmqt_parent_' . $key;
 							if ($option_key == $parent) {
-								$custom_options[$key][4][] = array($title, $link, $new_window, $unique, $key);
+								$custom_options[$key][5][] = array($title, $link, $new_window, $unique, $key, $icon);
 							}
 						}
 					}
@@ -354,10 +371,14 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 			}
 		}
 
-		public function custom_form() { ?>
+		public function custom_form() {
+			global $pagenow;
+			if ($pagenow == 'admin.php' && $_GET['page'] == 'ecm-custom-quick-toolbar') {
+			wp_enqueue_media();
+			} ?>
 			<div class="wrap">
-				<h2>Custom Quick Toolbar Links <a href="<?php echo get_admin_url() . 'admin.php?page=ecm-quick-toolbar';?>" class="add-new-h2">Edit Quick Toolbar Links</a></h2>
-				<form id="_ecmqt_custom_quicklinks_options" name="_ecmqt_custom_quicklinks_options" method="post" action="">
+				<h2>Custom Quick Toolbar Links <a href="<?php echo get_admin_url() . 'admin.php?page=ecm-quick-toolbar';?>" class="add-new-h2 ecmqt-h2">Edit Quick Toolbar Links</a></h2>
+				<form id="_ecmqt_custom_quicklinks_options" name="_ecmqt_custom_quicklinks_options" method="post" action="" enctype="multipart/form-data">
 					<label for="_ecmqt_custom_items_title">Link Title *</label><br/>
 					<input type="text" name="_ecmqt_custom_items_title" id="_ecmqt_custom_items_title" maxlength="50" size="40" required><br/><br/>
 					<label for="_ecmqt_custom_items_link">Link URL</label><br/>
@@ -373,8 +394,12 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 							} ?>
 						</select><br/><br/>
 					<?php } ?>
+					<input id="_ecmqt_upload_image_button" class="button" type="button" value="Choose Icon Image" />
+					<input id="_ecmqt_upload_image_label" type="text" size="36" name="_ecmqt_upload_image_label" disabled /><br/>
+					<p class="description">Icons will only be displayed for top level menu items.</p><br/>
 					<input name="submit" type="submit" value="Add Custom Quick Link &raquo;" class="button button-primary">
 					<input type="hidden" name="_ecmqt_custom_quicklinks_options" value="_ecmqt_custom_quicklinks_options">
+					<input id="_ecmqt_upload_image" type="hidden" size="36" name="_ecmqt_upload_image" />
 				</form><br/><br/>
 
 				<?php
@@ -406,8 +431,8 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 					echo '<td class="ecmqt-custom-link-delete"><a id="ecmqt_delete_' . $x .'" onClick="ecmqtDelete(\'' . $custom_option[3] .'\',\''. $custom_option[0] . '\')">Delete</a></td>';
 					echo '</tr>';
 					$x++;
-					if (isset($custom_option[4]) && !empty($custom_option[4])) {
-						foreach ($custom_option[4] as $co_submenu) {
+					if (isset($custom_option[5]) && !empty($custom_option[5])) {
+						foreach ($custom_option[5] as $co_submenu) {
 							$ecm_class = ( ' class="alternate"' == $ecm_class ) ? '' : ' class="alternate"';
 							echo '<tr ' . $ecm_class . '>';
 							echo '<td>&mdash; ' . $co_submenu[0] . '</td>';
@@ -502,14 +527,16 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 						$items[$key] = array(
 							'name' => $item[0],
 							'link' => get_admin_url() . "admin.php?page={$submenu_items[0][2]}",
-							'permissions' => $item[1]
+							'permissions' => $item[1],
+							'dashicon' => $item[6]
 						);
 
 					} else {
 						$items[$key] = array(
 							'name' => $item[0],
 							'link' => get_admin_url() . $submenu_items[0][2],
-							'permissions' => $item[1]
+							'permissions' => $item[1],
+							'dashicon' => $item[6]
 						);
 					}
 				} elseif ( ! empty( $item[2] ) && current_user_can( $item[1] ) ) {
@@ -523,14 +550,16 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 						$items[$key] = array(
 							'name' => $item[0],
 							'link' => get_admin_url() . "admin.php?page={$item[2]}",
-							'permissions' => $item[1]
+							'permissions' => $item[1],
+							'dashicon' => $item[6]
 						);
 
 					} else {
 						$items[$key] = array(
 							'name' => $item[0],
 							'link' => get_admin_url() . $item[2],
-							'permissions' => $item[1]
+							'permissions' => $item[1],
+							'dashicon' => $item[6]
 						);
 					}
 				}
@@ -586,7 +615,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 							$items[$key]['subpages'][] = array(
 								'name' => $sub_item[0],
 								'link' => get_admin_url() . $sub_item_url,
-								'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link']),
+								'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link'], 'dashicon' => $items[$key]['dashicon']),
 								'permissions' => $sub_item[1]
 							);
 						} else {
@@ -594,7 +623,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 							$items[$key]['subpages'][] = array(
 								'name' => $sub_item[0],
 								'link' => get_admin_url() . $sub_item[2],
-								'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link']),
+								'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link'], 'dashicon' => $items[$key]['dashicon']),
 								'permissions' => $sub_item[1]
 
 							);

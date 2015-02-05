@@ -3,7 +3,7 @@ Contributors: ecommnet, gavin.williams
 Tags: admin, adminbar, toolbar, links, quick links, quick, shortcut, admin bar, menu, submenu
 Requires at least: 3.3
 Tested up to: 4.1
-Stable tag: 0.1
+Stable tag: 0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,3 +49,7 @@ This section describes how to install the plugin and get it working.
 
 = 0.1 =
 * First version of the plugin
+
+= 0.2 =
+* Adding Icons to the Quick Toolbar links
+* Prefixing stylesheet to avoid conflict
