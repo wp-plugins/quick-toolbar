@@ -50,4 +50,5 @@ jQuery(document).ready(function($){
 		//Open the uploader dialog
 		custom_uploader.open();
 	});
+
 });

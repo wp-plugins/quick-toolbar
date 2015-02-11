@@ -3,7 +3,7 @@
  * Plugin Name: Quick Toolbar
  * Plugin URI: http://www.ecommnet.uk
  * Description: Add frequently used menu links and custom links to the Admin Toolbar.
- * Version: 0.2
+ * Version: 0.3
  * Author: Ecommnet
  * Author URI: http://www.ecommnet.uk
  * License: GPL2
@@ -18,7 +18,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 		 * Plugin version number
 		 * @var string
 		 */
-		public $version = '0.2';
+		public $version = '0.3';
 
 		/**
 		 * Single instance of the class
@@ -93,9 +93,9 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 					$decoded = unserialize(base64_decode($option));
 					if (isset($decoded[2]) && !empty($decoded[2])) {
 						if (0 === strpos($decoded[2][3], 'http')) {
-							$title = '<img src="'. $decoded[2][3] . '"/>' . $decoded[2][1];
+							$title = '<img src="'. $decoded[2][3] . '"/>' . '<span class="ecmqt-link-title">' . $decoded[2][1] . '</span>';
 						} else {
-							$title = '<span class="wp-menu-image dashicons-before ' . $decoded[2][3] . '"></span>' . $decoded[2][1];
+							$title = '<span class="wp-menu-image dashicons-before ' . $decoded[2][3] . '"></span>' . '<span class="ecmqt-link-title">' . $decoded[2][1] . '</span>';
 						}
 						$allowed = user_can( $user_ID, $decoded[3] );
 						if ($allowed == true) {
@@ -110,7 +110,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 						if (0 === strpos($decoded[4], 'http')) {
 							$title = '<img src="'. $decoded[4] . '"/>' . $decoded[0];
 						} else {
-							$title = '<span class="wp-menu-image dashicons-before ' . $decoded[4] . '"></span>' . $decoded[0];
+							$title = '<span class="wp-menu-image dashicons-before ' . $decoded[4] . '"></span>' . '<span class="ecmqt-link-title">' . $decoded[0] . '</span>';
 						}
 						$allowed = user_can( $user_ID, $decoded[3] );
 						if ($allowed == true) {
@@ -153,14 +153,14 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 					if (empty($custom_options[$key][4]) || !isset($custom_options[$key][4])) {
 						$title = $custom_options[$key][0];
 					} else {
-						$title = '<img src="'. $custom_options[$key][4] . '" />' . $custom_options[$key][0];
+						$title = '<img src="'. $custom_options[$key][4] . '" />' . '<span class="ecmqt-link-title">' . $custom_options[$key][0] . '</span>';
 					}
 
 					if (isset($custom_options[$key][5]) && !empty($custom_options[$key][5])) {
 						if (isset($custom_options[$key][2]) && !empty($custom_options[$key][2]) && $custom_options[$key][2] == true) {
-							$meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu', 'target' => '_blank');
+							$meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu ecmqt-custom-link', 'target' => '_blank');
 						} else {
-							$meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu');
+							$meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu ecmqt-custom-link');
 						}
 
 						$admin_bar->add_menu( array(
@@ -171,9 +171,9 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 						));
 					} else {
 						if (isset($custom_options[$key][2]) && !empty($custom_options[$key][2]) && $custom_options[$key][2] == true) {
-							$meta = array('class' => 'ecmqt-menu-item', 'target' => '_blank');
+							$meta = array('class' => 'ecmqt-menu-item ecmqt-custom-link', 'target' => '_blank');
 						} else {
-							$meta = array('class' => 'ecmqt-menu-item');
+							$meta = array('class' => 'ecmqt-menu-item ecmqt-custom-link');
 						}
 						$admin_bar->add_menu( array(
 							'id'    => 'ecmqt_'.date("Y-m-d-his").$co,
@@ -190,9 +190,9 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 					if (isset($custom_option[5]) && !empty($custom_option[5])) {
 						foreach ($custom_option[5] as $custom_menu_item) {
 							if (isset($custom_menu_item[2]) && !empty($custom_menu_item[2]) && $custom_menu_item[2] == true) {
-								$meta = array('class' => 'ecmqt-submenu-item', 'target' => '_blank');
+								$meta = array('class' => 'ecmqt-submenu-item ecmqt-custom-link', 'target' => '_blank');
 							} else {
-								$meta = array('class' => 'ecmqt-submenu-item');
+								$meta = array('class' => 'ecmqt-submenu-item ecmqt-custom-link');
 							}
 							$admin_bar->add_menu( array(
 								'id'    => 'ecmqt_'.date("Y-m-d-his").$cos,
@@ -205,9 +205,147 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 						}
 					}
 				}
+			}
 
+			// Custom Links - Single Menu (for responsive use)
+			if (!empty($custom_options) && isset($custom_options)) {
+				$main_title = '<span class="wp-menu-image dashicons-before dashicons-admin-links"></span><span class="ecmqt-link-title">My Custom Links</span>';
+				$main_meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu ecmqt-custom-link-resp');
+				$admin_bar->add_menu( array(
+					'id'    => 'ecmqt_custom_links_header',
+					'title' => $main_title,
+					'href'  => '',
+					'meta' 	=> $main_meta
+				));
+				$cor = 5000;
+				$cors = 6000;
+				foreach ($custom_options as $key => $custom_option) {
+					$title = '<span class="ecmqt-custom-top">' . $custom_options[$key][0] . '</span>';
+
+					if (isset($custom_options[$key][2]) && !empty($custom_options[$key][2]) && $custom_options[$key][2] == true) {
+						$meta = array('class' => 'ecmqt-menu-item ecmqt-custom-link-resp', 'target' => '_blank');
+					} else {
+						$meta = array('class' => 'ecmqt-menu-item ecmqt-custom-link-resp');
+					}
+
+					$admin_bar->add_menu( array(
+						'id'    => 'ecmqt_'.date("Y-m-d-his").$cor,
+						'parent' => 'ecmqt_custom_links_header',
+						'title' => $title,
+						'href'  => $custom_options[$key][1],
+						'meta' 	=> $meta
+					));
+
+					if (isset($custom_options[$key][5]) && !empty($custom_options[$key][5])) {
+						foreach($custom_options[$key][5] as $custom_menu_item) {
+							if (isset($custom_menu_item[2]) && !empty($custom_menu_item[2]) && $custom_menu_item[2] == true) {
+								$meta = array('class' => 'ecmqt-submenu-item ecmqt-custom-link-resp', 'target' => '_blank');
+							} else {
+								$meta = array('class' => 'ecmqt-submenu-item ecmqt-custom-link-resp');
+							}
+							$title = '<span class="ecmqt-custom-sub">&mdash; ' . $custom_menu_item[0] . '</span>';
+
+							$admin_bar->add_menu( array(
+								'id'    => 'ecmqt_'.date("Y-m-d-his").$cors,
+								'title' => $title,
+								'href'  => $custom_menu_item[1],
+								'parent' => 'ecmqt_custom_links_header',
+								'meta' 	=> $meta
+							));
+							$cors++;
+						}
+					}
+					$cor++;
+				}
+			}
+
+			// All Links - Single Menu (for responsive use)
+			$main_title = '<span class="wp-menu-image dashicons-before dashicons-admin-links"></span><span class="ecmqt-link-title">All Quick Links</span>';
+			$main_meta = array('class' => 'ecmqt-menu-item ecmqt-has-submenu ecmqt-all-links-resp');
+			$admin_bar->add_menu( array(
+				'id'    => 'ecmqt_all_links_header',
+				'title' => $main_title,
+				'href'  => '',
+				'meta' 	=> $main_meta
+			));
+
+			if (!empty($options) && isset($options)) {
+				// Top Level Menus
+				$jall = 7000;
+				$jalls = 8000;
+				$user_ID = get_current_user_id();
+				foreach($options as $option) {
+					$decoded = unserialize(base64_decode($option));
+					if (isset($decoded[2]) && !empty($decoded[2])) {
+						$title = '<span class="ecmqt-all-top">' . $decoded[2][1] . '</span>';
+						$allowed = user_can( $user_ID, $decoded[3] );
+						if ($allowed == true) {
+							$admin_bar->add_menu( array(
+								'id'    => 'ecmqt_'.date("Y-m-d-his").$decoded[2][1].$decoded[2][2],
+								'title' => __($title),
+								'href'  => $decoded[2][2],
+								'parent' => 'ecmqt_all_links_header',
+								'meta' 	=> array('class' => 'ecmqt-menu-item')
+							));
+							if (isset($decoded[2]) && !empty($decoded[2])) {
+								$admin_bar->add_menu( array(
+									'id'    => 'ecmqt_'.date("Y-m-d-his").$jalls,
+									'title' => '<span class="ecmqt-all-sub">&mdash; ' . $decoded[0] . '</span>',
+									'href'  => $decoded[1],
+									'parent' => 'ecmqt_all_links_header',
+									'meta' 	=> array('class' => 'ecmqt-submenu-item')
+								));
+								$jalls++;
+							}
+						}
+					}
+				}
+			}
+
+			if (!empty($custom_options) && isset($custom_options)) {
+				$cor = 9000;
+				$cors = 10000;
+				foreach ($custom_options as $key => $custom_option) {
+					$title = $custom_options[$key][0];
+
+					if (isset($custom_options[$key][2]) && !empty($custom_options[$key][2]) && $custom_options[$key][2] == true) {
+						$meta = array('class' => 'ecmqt-menu-item ecmqt-all-links-resp', 'target' => '_blank');
+					} else {
+						$meta = array('class' => 'ecmqt-menu-item ecmqt-all-links-resp');
+					}
+
+					$admin_bar->add_menu( array(
+						'id'    => 'ecmqt_'.date("Y-m-d-his").$cor,
+						'parent' => 'ecmqt_all_links_header',
+						'title' => '<span class="ecmqt-all-top">' . $title . '</span>',
+						'href'  => $custom_options[$key][1],
+						'meta' 	=> $meta
+					));
+
+					if (isset($custom_options[$key][5]) && !empty($custom_options[$key][5])) {
+						foreach($custom_options[$key][5] as $custom_menu_item) {
+							if (isset($custom_menu_item[2]) && !empty($custom_menu_item[2]) && $custom_menu_item[2] == true) {
+								$meta = array('class' => 'ecmqt-submenu-item ecmqt-custom-link-resp', 'target' => '_blank');
+							} else {
+								$meta = array('class' => 'ecmqt-submenu-item ecmqt-custom-link-resp');
+							}
+							$title = '<span class="ecmqt-all-sub">&mdash; ' . $custom_menu_item[0] . '</span>';
+
+							$admin_bar->add_menu( array(
+								'id'    => 'ecmqt_'.date("Y-m-d-his").$cors,
+								'title' => $title,
+								'href'  => $custom_menu_item[1],
+								'parent' => 'ecmqt_all_links_header',
+								'meta' 	=> $meta
+							));
+							$cors++;
+						}
+					}
+					$cor++;
+				}
 			}
 		}
+
 
 		public function admin_page() {
 			$i = 0;
