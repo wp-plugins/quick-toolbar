@@ -55,13 +55,15 @@
 	content: ' \25BE';
 }
 
-#_ecmqt_custom_links .ecmqt-custom-link-delete a {
-	color: red;
+#_ecmqt_custom_links .ecmqt-custom-link-edit-delete a {
 	transition: 0.2s;
 	cursor: pointer;
 }
+#_ecmqt_custom_links .ecmqt-custom-link-edit-delete a.ecmqt_delete {
+	color: red;
+}
 
-#_ecmqt_custom_links .ecmqt-custom-link-delete a:hover {
+#_ecmqt_custom_links .ecmqt-custom-link-edit-delete a.ecmqt_delete:hover {
 	color: darkred;
 }
 

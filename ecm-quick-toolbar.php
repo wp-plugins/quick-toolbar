@@ -3,7 +3,7 @@
  * Plugin Name: Quick Toolbar
  * Plugin URI: http://www.ecommnet.uk
  * Description: Add frequently used menu links and custom links to the Admin Toolbar.
- * Version: 0.3
+ * Version: 0.4
  * Author: Ecommnet
  * Author URI: http://www.ecommnet.uk
  * License: GPL2
@@ -18,7 +18,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 		 * Plugin version number
 		 * @var string
 		 */
-		public $version = '0.3';
+		public $version = '0.4';
 
 		/**
 		 * Single instance of the class
@@ -66,6 +66,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 
 		public function enqueue_styles() {
 			wp_enqueue_style( 'dashicons' );
+			add_thickbox();
 			wp_register_style( 'ecmqt_wp_admin_css', plugin_dir_url( __FILE__ ) . '/css/ecmqt-admin-styles.css', false, $this->version );
 			wp_enqueue_style( 'ecmqt_wp_admin_css' );
 			wp_enqueue_script( 'ecmqt_scripts', plugin_dir_url( __FILE__ ) . '/js/ecmqt-scripts.js', array(), $this->version, true );
@@ -77,7 +78,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 		}
 
 		public function add_admin_menu() {
-			add_menu_page( 'Quick Toolbar Links', 'Quick Toolbar', 'manage_options', 'ecm-quick-toolbar', array($this, 'admin_page'), 'dashicons-admin-links', 100 );
+			add_menu_page( 'Quick Toolbar Links', 'Quick Toolbar', 'manage_options', 'ecm-quick-toolbar', array($this, 'admin_page'), 'dashicons-admin-links' );
 			add_submenu_page( 'ecm-quick-toolbar', 'Custom Quick Links', 'Edit Custom Links', 'manage_options', 'ecm-custom-quick-toolbar', array($this, 'admin_custom_page') );
 		}
 
@@ -271,7 +272,6 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 
 			if (!empty($options) && isset($options)) {
 				// Top Level Menus
-				$jall = 7000;
 				$jalls = 8000;
 				$user_ID = get_current_user_id();
 				foreach($options as $option) {
@@ -566,7 +566,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 				foreach ($custom_options as $custom_option) {
 					echo '<tr class="ecmqt-heading">';
 					echo '<td>' . $custom_option[0] . '</td>';
-					echo '<td class="ecmqt-custom-link-delete"><a id="ecmqt_delete_' . $x .'" onClick="ecmqtDelete(\'' . $custom_option[3] .'\',\''. $custom_option[0] . '\')">Delete</a></td>';
+					echo '<td class="ecmqt-custom-link-edit-delete"><a class="ecmqt_delete" id="ecmqt_delete_' . $x .'" onclick="ecmqtDelete(\'' . $custom_option[3] .'\',\''. $custom_option[0] . '\')">Delete</a></td>';
 					echo '</tr>';
 					$x++;
 					if (isset($custom_option[5]) && !empty($custom_option[5])) {
@@ -574,7 +574,7 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 							$ecm_class = ( ' class="alternate"' == $ecm_class ) ? '' : ' class="alternate"';
 							echo '<tr ' . $ecm_class . '>';
 							echo '<td>&mdash; ' . $co_submenu[0] . '</td>';
-							echo '<td class="ecmqt-custom-link-delete"><a id="ecmqt_delete_' . $x .'" onclick="ecmqtDelete(\'' . $co_submenu[3] .'\',\''. $co_submenu[0] . '\')">Delete</a></td>';
+							echo '<td class="ecmqt-custom-link-edit-delete"><a class="ecmqt_delete" id="ecmqt_delete_' . $x .'" onclick="ecmqtDelete(\'' . $co_submenu[3] .'\',\''. $co_submenu[0] . '\')">Delete</a></td>';
 							echo '</tr>';
 							$x++;
 						}
@@ -766,6 +766,34 @@ if (!class_exists('ECM_Quick_Toolbar')) {
 
 							);
 						}
+					}
+
+					if (0 === strpos($item[2], 'edit.php')) {
+						if ($item[0] == 'Posts' ? $first = '?' : $first = '&');
+						$items[$key]['subpages'][] = array(
+							'name' => 'Published ' . $item[0],
+							'link' => get_admin_url() . $item[2] . $first . 'post_status=publish',
+							'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link'], 'dashicon' => $items[$key]['dashicon']),
+							'permissions' => $item[1]
+						);
+						$items[$key]['subpages'][] = array(
+							'name' => 'Draft ' . $item[0],
+							'link' => get_admin_url() . $item[2] . $first . 'post_status=draft',
+							'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link'], 'dashicon' => $items[$key]['dashicon']),
+							'permissions' => $item[1]
+						);
+						$items[$key]['subpages'][] = array(
+							'name' => 'Pending ' . $item[0],
+							'link' => get_admin_url() . $item[2] . $first . 'post_status=pending',
+							'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link'], 'dashicon' => $items[$key]['dashicon']),
+							'permissions' => $item[1]
+						);
+						$items[$key]['subpages'][] = array(
+							'name' => 'Trashed ' . $item[0],
+							'link' => get_admin_url() . $item[2] . $first . 'post_status=trash',
+							'parent' => array('id' => $key, 'name' => $items[$key]['name'], 'link' => $items[$key]['link'], 'dashicon' => $items[$key]['dashicon']),
+							'permissions' => $item[1]
+						);
 					}
 				}
 			}

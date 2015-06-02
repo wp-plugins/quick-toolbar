@@ -2,8 +2,8 @@
 Contributors: ecommnet, gavin.williams
 Tags: admin, adminbar, toolbar, links, quick links, quick, shortcut, admin bar, menu, submenu
 Requires at least: 3.3
-Tested up to: 4.1
-Stable tag: 0.3
+Tested up to: 4.2.1
+Stable tag: 0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,3 +56,7 @@ This section describes how to install the plugin and get it working.
 
 = 0.3 =
 * Responsive compatibility
+
+= 0.4 =
+* Fixing a bug that removes other plugins from the menu
+* Adding Published, Draft, Pending and Trashed Quick Links to Posts, Pages and Custom Post Types
